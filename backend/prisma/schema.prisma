@@ -22,6 +22,7 @@ model app_users {
   email       String          @unique
   password    String
   username    String
+  userTag     String          @unique 
   avatar      String?
   role        String          @default("user")
   country     String?
@@ -43,7 +44,8 @@ model chat_rooms {
   theme      String
   createdAt  DateTime      @default(now())
   updatedAt  DateTime?     @default(now()) @updatedAt
-
+  isOpen     Boolean   @default(true)
+  maxUsers   Int       @default(2)
   room_users room_users[]
   messages   chat_messages[]
 }
@@ -52,7 +54,7 @@ model room_users {
   user    app_users   @relation(fields: [userId], references: [id])
   userId  Int
 
-  room    chat_rooms  @relation(fields: [roomId], references: [id])
+  chat_room chat_rooms @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId  Int
 
   @@id([userId, roomId])

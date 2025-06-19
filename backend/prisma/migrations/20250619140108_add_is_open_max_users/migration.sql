@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "chat_rooms" ADD COLUMN     "isOpen" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "maxUsers" INTEGER NOT NULL DEFAULT 2;

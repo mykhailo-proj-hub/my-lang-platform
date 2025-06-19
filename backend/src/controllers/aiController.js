@@ -20,7 +20,7 @@ exports.improveMessage = async (req, res) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-nano',
+        model: 'gpt-3.5-turbo',
         messages: [
           {
             role: 'system',
@@ -29,7 +29,8 @@ exports.improveMessage = async (req, res) => {
           },
           {
             role: 'user',
-            content: `Improve this sentence:\n${content}`,
+            content: `Please improve this English sentence grammatically and stylistically without changing its meaning:\n"${content}"`,
+
           },
         ],
         temperature: 0.6,

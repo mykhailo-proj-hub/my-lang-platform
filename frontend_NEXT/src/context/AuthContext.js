@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { initSocket, disconnectSocket } from '../../socket';
 
 export const AuthContext = createContext();
 
@@ -10,17 +11,35 @@ export function AuthProvider({ children }) {
 
   const fetchUser = async () => {
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+
       const res = await fetch('http://localhost:5000/api/auth/me', {
-        credentials: 'include'
+        credentials: 'include',
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
 
       if (res.ok) {
         const data = await res.json();
-        setUser(data);
+        if (data?.id) {
+          setUser(data);
+          initSocket(data.id); // ✅ передаємо userId для socket
+        } else {
+          setUser(null);
+          disconnectSocket();
+        }
       } else {
         setUser(null);
+        disconnectSocket();
       }
     } catch (err) {
+      if (err.name === 'AbortError') {
+        console.error('Fetch user request timed out');
+      } else {
+        console.error('Failed to fetch user:', err);
+      }
       setUser(null);
     } finally {
       setLoading(false);
@@ -32,12 +51,20 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async () => {
-    await fetchUser(); // після логіну оновити юзера
+    await fetchUser();
   };
 
-  const logout = () => {
-    setUser(null);
-    document.cookie = 'token=; Max-Age=0; path=/';
+  const logout = async () => {
+    try {
+      await fetch('http://localhost:5000/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      setUser(null);
+      disconnectSocket();
+    } catch (err) {
+      console.error('Failed to logout:', err);
+    }
   };
 
   return (

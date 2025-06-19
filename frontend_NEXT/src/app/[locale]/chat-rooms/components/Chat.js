@@ -6,84 +6,201 @@ import { toast } from 'react-hot-toast';
 import { FiArrowLeft, FiSmile, FiPaperclip, FiSend, FiInfo } from 'react-icons/fi';
 import AvatarCircle from '@/components/AvatarCircle';
 import ImprovedPreviewBar from './ImprovedPreviewBar';
+import { getSocket } from '@/../socket';
 import './styles/Chat.css';
 
-export default function Chat({ room, currentUserId, locale, onClose }) {
+export default function Chat({ room, currentUserId, locale, onClose, highlightedMessageId }) {
+  // console.log('Chat component rendered with room:', room, 'currentUserId:', currentUserId, 'locale:', locale);
   const t = useTranslations('ChatRoom');
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const bottomRef = useRef(null);
-  const [improveEnabled, setImproveEnabled] = useState(true); // для перемикача
-  const [preview, setPreview] = useState(null); // { original: "", improved: "" }
+  const [improveEnabled, setImproveEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedState = localStorage.getItem('improveEnabled');
+      return savedState !== null ? JSON.parse(savedState) : true;
+    }
+    return true;
+  });
+  const [preview, setPreview] = useState(null);
   const [showAIModal, setShowAIModal] = useState(false);
 
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket || !room?.id) return;
+  
+    socket.emit('joinRoom', room.id);
+    console.log(`📥 [Chat] joined room ${room.id}`);
+  
+    return () => {
+      socket.emit('leaveRoom', room.id);
+      console.log(`📤 [Chat] left room ${room.id}`);
+    };
+  }, [room.id]);
 
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('improveEnabled', JSON.stringify(improveEnabled));
+    }
+  }, [improveEnabled]);
+  
+  const bottomRef = useRef(null);
+
+  if (!room?.id || !room?.participants || !currentUserId) return null;
 
   useEffect(() => {
+    if (!room?.id) return;
+
+    console.log('[LOAD MESSAGES] Triggered for room.id:', room.id);
+
+    const controller = new AbortController();
+
     fetch(`http://localhost:5000/api/chat/chat-rooms/${room.id}/messages`, {
-      credentials: 'include'
+      credentials: 'include',
+      signal: controller.signal,
     })
       .then(res => {
+        if (!room?.id || !room?.participants || !currentUserId) return null;
+        console.log('room.id тип:', typeof room.id, 'значення:', room.id);
         if (!res.ok) throw new Error();
         return res.json();
       })
       .then(data => {
         if (!Array.isArray(data.messages)) throw new Error();
         setMessages(data.messages);
+  
+        // Виклик для зміни статусу повідомлень
+        fetch(`http://localhost:5000/api/chat/chat-rooms/${room.id}/change_message_status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        })
+          .then(res => {
+            if (!res.ok) throw new Error('Failed to update message status');
+            return res.json();
+          })
+          .then(data => {
+            console.log('Message status updated:', data);
+          })
+          .catch(err => {
+            console.error('Error updating message status:', err);
+          });
       })
-      .catch(() => {
-        toast.error(t('errorFetch'));
+      .catch(err => {
+        if (err.name !== 'AbortError') {
+          toast.error(t('errorFetch'));
+          console.error('❌ Fetch failed:', err);
+        }
       });
+  
+    return () => controller.abort(); // 💣 Аборт запиту при зміні room
   }, [room.id, t]);
 
+  const highlightedRef = useRef(null);
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-    const handleSubmit = async (e) => {
-    e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
-
-    if (improveEnabled) {
-        try {
-        const improved = await fetchImproved(trimmed);
-        setPreview({ original: trimmed, improved });
-        } catch (err) {
-        toast.error('Помилка при покращенні');
-        }
-    } else {
-        sendMessage(trimmed);
-        setInput('');
+    if (highlightedMessageId && highlightedRef.current) {
+      highlightedRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      highlightedRef.current.classList.add('highlight');
+  
+      const timeout = setTimeout(() => {
+        highlightedRef.current?.classList.remove('highlight');
+      }, 1500);
+  
+      return () => clearTimeout(timeout);
+    } else if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
+  }, [messages, highlightedMessageId]);
+  
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  const trimmed = input.trim();
+  if (!trimmed) return;
+
+  if (improveEnabled) {
+      try {
+      const improved = await fetchImproved(trimmed);
+      setPreview({ original: trimmed, improved });
+      } catch (err) {
+      toast.error('Помилка при покращенні');
+      }
+  } else {
+      sendMessage(trimmed);
+      setInput('');
+  }
+  };
+
+  // Підписка на нові повідомлення при зміні кімнати
+  useEffect(() => {
+    if (!room?.id) return;
+
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleNewMessage = (msg) => {
+      if (msg.roomId === room.id) {
+        setMessages((prev) => [...prev, msg]);
+      }
     };
 
-const sendMessage = async (text) => {
-    const res = await fetch(`http://localhost:5000/api/chat/chat-rooms/${room.id}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ content: text }),
-    });
+    socket.on('newMessage', handleNewMessage);
+
+    return () => {
+      socket.off('newMessage', handleNewMessage);
+    };
+  }, [room.id]);
   
-    const data = await res.json();
-    setMessages(prev => [...prev, data]);
-  };
-  
-  const fetchImproved = async (text) => {
-    const res = await fetch('http://localhost:5000/api/ai/improve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ content: text }),
-    });
-  
-    if (!res.ok) throw new Error('AI error');
-    const data = await res.json();
-    return data.improved;
+
+    
+  const sendMessage = (text) => {
+    const socket = getSocket();
+    if (!socket) {
+      toast.error('Socket not connected');
+      return;
+    }
+
+    const messageData = {
+      content: text,
+      roomId: room.id,
+      senderId: currentUserId,
+    };
+
+    socket.emit('sendMessage', messageData);
   };
 
+  const fetchImproved = async (text) => {
+    try {
+      const res = await fetch('http://localhost:5000/api/ai/improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ content: text }),
+      });
   
+      if (!res.ok) {
+        throw new Error('Failed to improve message');
+      }
+  
+      const data = await res.json();
+      return data.improved;
+    } catch (err) {
+      console.error(err);
+      toast.error('Помилка під час обробки повідомлення AI');
+      throw err; // щоб handleSubmit міг зреагувати
+    }
+  };
+    
+  const otherUser = room?.participants?.find(p => p.id !== currentUserId);
+  
+    if (!room?.participants) {
+    console.warn('Chat: room.participants is missing');
+    return null;
+  }
+
   return (
     <div className="chat-container">
       {/* 🧭 Header */}
@@ -93,13 +210,13 @@ const sendMessage = async (text) => {
           <FiArrowLeft size={20} />
         </button>
         <AvatarCircle
-          username={room.participants.find(p => p.id !== currentUserId)?.username}
-          avatar={room.participants.find(p => p.id !== currentUserId)?.avatar}
+          username={otherUser?.username}
+          avatar={otherUser?.avatar}
           size={40}
         />
         <div className="chat-header-text">
           <p className="chat-header-name">
-            {room.participants.find(p => p.id !== currentUserId)?.username}
+            {otherUser?.username || 'Очікуємо співрозмовника'}
           </p>
           {/* <p className="chat-header-status">{t('online')}</p> */}
         </div>
@@ -130,8 +247,9 @@ const sendMessage = async (text) => {
       <div className="chat-messages">
         {messages.map(msg => (
           <div
-            key={msg.id}
-            className={msg.sender.id === currentUserId ? 'chat-out' : 'chat-in'}
+          key={msg.id}
+          ref={msg.id === highlightedMessageId ? highlightedRef : null}
+          className={msg.sender.id === currentUserId ? 'chat-out' : 'chat-in'}
           >
             {msg.sender.id !== currentUserId && (
               <AvatarCircle

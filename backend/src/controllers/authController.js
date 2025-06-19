@@ -1,11 +1,13 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { PrismaClient } = require("@prisma/client");
-
-const prisma = new PrismaClient();
+const prisma = require('../prismaClient');
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Реєстрація нового користувача
+const generateUserTag = (username) => {
+  const randomDigits = Math.floor(1000 + Math.random() * 9000); // 4 випадкові цифри
+  return `${username}_${randomDigits}`;
+};
+
 exports.register = async (req, res) => {
   const {
     email,
@@ -23,6 +25,22 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: "Користувач вже існує" });
     }
 
+    // Унікальний userTag у форматі username_1234
+    let userTag;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    do {
+      userTag = generateUserTag(username);
+      const existingTag = await prisma.app_users.findUnique({ where: { userTag } });
+      if (!existingTag) break;
+      attempts++;
+    } while (attempts < maxAttempts);
+
+    if (attempts === maxAttempts) {
+      return res.status(500).json({ error: "Не вдалося згенерувати унікальний userTag" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await prisma.app_users.create({
@@ -30,6 +48,7 @@ exports.register = async (req, res) => {
         email,
         password: hashedPassword,
         username,
+        userTag, // Наприклад: john_3841
         country,
         nativeLang,
         targetLang,
@@ -37,7 +56,7 @@ exports.register = async (req, res) => {
       },
     });
 
-    res.status(201).json({ message: "Користувач створений", userId: newUser.id });
+    res.status(201).json({ message: "Користувач створений", userId: newUser.id, userTag });
   } catch (err) {
     console.error("Registration error:", err);
     res.status(500).json({ error: "Помилка під час реєстрації" });

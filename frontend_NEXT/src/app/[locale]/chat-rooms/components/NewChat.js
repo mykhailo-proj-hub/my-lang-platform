@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'react-hot-toast';
 import { useRouter, useParams } from 'next/navigation';
@@ -24,16 +24,23 @@ export default function NewChat({ theme, setTheme, creating, setCreating }) {
     }
     setCreating(true);
     try {
-      const res = await fetch('/api/chat-rooms', {
+      const res = await fetch('http://localhost:5000/api/chat/chat-rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ theme })
       });
       if (!res.ok) throw new Error();
       const room = await res.json();
-      router.push(`/${locale}/chat/${room.id}`);
-    } catch {
-      toast.error(t('errorCreate'));
+      router.push(`/${locale}/chat-rooms?roomId=${room.id}`);
+    } catch (err) {
+      console.error('❌ Chat creation error:', err);
+      try {
+        const body = await res.json(); // не завжди працює, якщо throw new Error()
+        toast.error(body.error || 'Unknown error');
+      } catch {
+        toast.error('Не вдалося створити чат');
+      }
     } finally {
       setCreating(false);
     }

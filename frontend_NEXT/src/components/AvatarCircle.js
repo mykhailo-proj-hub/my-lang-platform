@@ -3,7 +3,7 @@
 import React from 'react';
 import '../styles/AvatarCircle.css';
 
-export default function AvatarCircle({ username = 'U', avatar = null, size = 45 }) {
+export default function AvatarCircle({ username = '', avatar = null, size = 45 }) {
   const getInitials = (name = '') => {
     const parts = name.trim().split(/\s+/).filter(Boolean);
     const first = parts[0]?.charAt(0).toUpperCase() || '';
@@ -23,7 +23,7 @@ export default function AvatarCircle({ username = 'U', avatar = null, size = 45 
       className="avatar"
       style={{ width: size, height: size }}
     >
-      {getInitials(username)}
+      {username && username.trim() !== '' ? getInitials(username) : '👤'}
     </div>
   );
 }

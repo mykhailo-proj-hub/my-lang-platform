@@ -30,7 +30,6 @@ export default function LoginModal({ onClose }) {
     });
 
     if (res.ok) {
-        const data = await res.json();
         await login();
         toast.success(t('success'), { id: 'login' });
         onClose();

@@ -152,8 +152,9 @@
   "send original": "Send original",
   "cancel": "Edit",
   "Improved": "Improved:",
-  "AI Improved info": "When enabled, AI suggests an improved version of your message before sending. You can choose which version to send."
-
+  "AI Improved info": "When enabled, AI suggests an improved version of your message before sending. You can choose which version to send.",
+  "yesterday": "Yesterday",
+  "Users found": "Users found"
 },
 "PracticeRoom": {
   "Question": "Question",
