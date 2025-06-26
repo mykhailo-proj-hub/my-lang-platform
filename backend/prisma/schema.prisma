@@ -35,8 +35,10 @@ model app_users {
   messagesSent   chat_messages[] @relation("SentMessages")
   dailyTasks     daily_tasks[]
   room_users     room_users[]
-  progress       user_progress?
   sessions       sessions[]
+  user_progress  user_progress[]
+  daily_generated_tasks daily_generated_tasks[]
+  archivedTasks archived_practice_tasks[]
 }
 
 model chat_rooms {
@@ -92,21 +94,32 @@ model corrections {
   original   String
   corrected  String
   explanation String?
+  type        String
 
   message    chat_messages @relation(fields: [messageId], references: [id])
   messageId  Int
   createdAt  DateTime      @default(now())
 }
 
-model user_progress {
-  id               Int        @id @default(autoincrement())
-  totalMessages    Int        @default(0)
-  correctedMessages Int       @default(0)
-  accuracy         Float?     @default(0.0)
-  updatedAt        DateTime   @default(now())
+model correction_theory {
+  type      String   @id // 'tense', 'article' і т.д.
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+}
 
-  user             app_users  @relation(fields: [userId], references: [id])
-  userId           Int        @unique
+model user_progress {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  date      DateTime  @default(now())
+  score     Int
+  total     Int
+  createdAt DateTime  @default(now())
+
+  user      app_users @relation(fields: [userId], references: [id])
+  user_progress user_progress_archive[]
+
+  @@unique([userId, date])
 }
 
 model sessions {
@@ -117,4 +130,50 @@ model sessions {
 
   user       app_users  @relation(fields: [userId], references: [id])
   userId     Int
+}
+
+model daily_generated_tasks {
+  id         Int        @id @default(autoincrement())
+  userId     Int
+  date       DateTime   @default(now())
+  question   String
+  options    String[]
+  correct    String
+  explanation String
+  type       String
+  answer String?
+
+  user       app_users @relation(fields: [userId], references: [id])
+
+  @@index([userId, date])
+}
+
+model archived_practice_tasks {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  date       DateTime
+  question   String
+  options    String[]
+  correct    String
+  explanation String
+  type       String
+  answer     String?  // відповідь користувача
+
+  archived_users user_progress_archive[] // опційно
+  user app_users @relation(fields: [userId], references: [id])
+
+  @@index([userId, date])
+}
+
+model user_progress_archive {
+  id              Int      @id @default(autoincrement())
+  userProgressId  Int
+  archivedTaskId  Int
+
+  user_progress         user_progress          @relation(fields: [userProgressId], references: [id])
+  archived_practice     archived_practice_tasks @relation(fields: [archivedTaskId], references: [id])
+
+  @@index([userProgressId])
+  @@index([archivedTaskId])
+  @@unique([userProgressId, archivedTaskId])
 }

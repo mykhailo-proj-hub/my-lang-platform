@@ -24,7 +24,8 @@
     "signup": "Sign Up",
     "login": "Log In",
     "unauthorized": "You are not logged in",
-    "authCheckFailed": "Authorization check failed"
+    "authCheckFailed": "Authorization check failed",
+    "logout": "Log Out"
   },
   "Register": {
     "title": "Create an Account",
@@ -156,10 +157,45 @@
   "yesterday": "Yesterday",
   "Users found": "Users found"
 },
+
 "PracticeRoom": {
-  "Question": "Question",
-  "Next": "Next",
-  "Prev": "Previous"
-  }
+  "completed": "🎉 Practice Completed!",
+  "score": "Result: {score} out of {total} correct",
+  "reviewAnswers": "🔍 Review Answers",
+  "morePractice": "🔁 More Practice",
+  "feedback": {
+    "perfect": "🌟 Excellent! All answers are correct!",
+    "good": "👍 Good job, but there's still room to improve.",
+    "average": "📘 Average performance. Try again!",
+    "poor": "💡 Consider reviewing the topic. Don't give up!"
+  },
+  "loading": "Loading tasks…",
+  "error": "Error",
+  "noTasks": "No tasks available today",
+  "task": "Task",
+  "prev": "Back",
+  "next": "Next",
+  "finish": "Show Results",
+  "selectAnswer": "Select an answer"
+},
+"Progress": {
+  "chatAnalyticsTitle": "General Chat Analytics",
+  "chatsCreated": "Chats Created",
+  "messagesSent": "Messages Sent",
+  "averageDuration": "Average Chat Duration",
+  "recommendationsTitle": "Personalized Recommendations",
+  "weeklyTarget": "Participate in {count} new topics this week.",
+  "unansweredTarget": "Respond to at least {count} unanswered questions.",
+  "focusTopics": "Focus on trending topics",
+  "achievementsTitle": "Achievements",
+  "messagesAchievement": "messages",
+  "activeUser": "Active User",
+  "practiceStatsTitle": "Practice Progress",
+  "sessions": "Practice Sessions",
+  "correct": "Correct Answers",
+  "incorrect": "Incorrect Answers",
+  "lastSession": "Last Session"
+}
+
 }
 

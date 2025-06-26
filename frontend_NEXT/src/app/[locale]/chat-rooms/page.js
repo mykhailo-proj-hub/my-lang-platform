@@ -9,7 +9,6 @@ import { getSocket } from '@/../socket'; // Імпортуємо сокет дл
 import ChatRoomsList from './components/ChatRoomsList';
 import Chat from './components/Chat';
 import NewChat from './components/NewChat';
-import { toggleRoom } from './components/ToggleRoom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import styles from './page.module.css';
 import './components/styles/Split.css';

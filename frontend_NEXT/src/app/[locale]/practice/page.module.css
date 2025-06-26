@@ -3,15 +3,93 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #f5f7fa;
+  justify-content: center; /* Центрування по вертикалі */
+  background-color: #f5f7fa; /* Світлий фон для сторінки */
+  height: calc(100vh - 123px); /* Висота сторінки */
 }
 
-.result {
-  font-size: 20px;
-  font-weight: bold;
+.summary {
   text-align: center;
-  background-color: #ffffff;
+  background: #ffffff; /* Білий фон */
   padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 16px; /* Округлені кути */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* М'яка тінь */
+  max-width: 600px; /* Максимальна ширина блоку */
+  margin: 2rem auto; /* Центрування блоку */
+  animation: fadeIn 0.5s ease-in-out; /* Анімація появи */
+}
+
+.summaryButtons {
+  display: flex;
+  justify-content: center; /* Центрування кнопок по горизонталі */
+  gap: 1rem; /* Відступ між кнопками */
+  margin-top: 1.5rem; /* Відступ зверху */
+}
+
+.summaryButtons button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background: #007bff; /* Синій фон */
+  color: #ffffff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.summaryButtons button:hover {
+  background: #0056b3; /* Темніший синій при наведенні */
+  transform: scale(1.05); /* Легке збільшення кнопки при наведенні */
+}
+
+.green {
+  color: #28a745; /* Зелений текст для успішного збереження */
+}
+
+.gray {
+  color: #6c757d; /* Сірий текст для незбереженого прогресу */
+}
+
+.loading {
+  font-size: 18px;
+  color: #007bff; /* Синій текст для індикатора завантаження */
+  margin-bottom: 1rem;
+}
+
+.error {
+  font-size: 18px;
+  color: #ff4d4d; /* Червоний текст для помилок */
+  margin-bottom: 1rem;
+}
+
+.info {
+  font-size: 18px;
+  color: #444444; /* Темний текст для інформаційного повідомлення */
+  margin-bottom: 1rem;
+}
+
+.progressBarContainer {
+  height: 14px;
+  background-color: #ddd;
+  border-radius: 5px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background-color: #4caf50;
+  transition: width 0.3s ease;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

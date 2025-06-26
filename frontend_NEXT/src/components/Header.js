@@ -122,7 +122,7 @@ export default function Header() {
               <div className="user-box">
                 <AvatarCircle username={user.username} avatar={user.avatar} />
                 <button className="logout-btn" onClick={handleLogout}>
-                  Logout
+                  {t('logout')}
                 </button>
               </div>
             ) : (

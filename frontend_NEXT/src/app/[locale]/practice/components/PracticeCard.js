@@ -1,78 +1,109 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import './styles/PracticeCard.css';
 
-export default function PracticeCard({ question, questionIndex, total, onNext, onPrev, isLast, onFinish }) {
+export default function PracticeCard({
+  task,
+  taskIndex,
+  total,
+  onNext,
+  onPrev,
+  onFinish,
+  isLast,
+  markAsFinished 
+}) {
+  const [selected, setSelected] = useState(null);
+  const [answered, setAnswered] = useState(false);
   const t = useTranslations('PracticeRoom');
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [isAnswered, setIsAnswered] = useState(false);
 
   useEffect(() => {
-    setSelectedOption(null);
-    setIsAnswered(false);
-  }, [question]);
+    setSelected(task.answer ?? null);
+    setAnswered(Boolean(task.answer));
+  }, [task.id]);
 
-  const handleSelect = (index) => {
-    if (!isAnswered) {
-      setSelectedOption(index);
-      setIsAnswered(true);
+  const handleSelect = async (option) => {
+    if (!answered) {
+      setSelected(option);
+      setAnswered(true);
+  
+      try {
+        await fetch('http://localhost:5000/api/practice/save-answer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            taskId: task.id,
+            answer: option,
+          }),
+          credentials: 'include',
+        });
+        
+        if (isLast) {
+          markAsFinished?.(); // 🆕 Явне завершення практики
+        }
+      } catch (err) {
+        console.error('❌ Не вдалося зберегти відповідь:', err);
+      }
     }
   };
-
-  const isCorrect = selectedOption === question.correct;
 
   return (
     <div className="practice-card">
       <div className="practice-card-header">
-        {t('Question')} {questionIndex + 1} / {total}
+        {t('task')} {taskIndex + 1} / {total}
       </div>
 
-      <div className="practice-card-question">{question.question}</div>
+      {task.theory && (
+        <div className="practice-theory">
+          <h4>📘 {task.theory?.title?.replace(/^Title:\s*/i, '') || ''}</h4>
+          <p>{task.theory.content}</p>
+        </div>
+      )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {question.options.map((option, index) => {
-          let className = 'practice-option';
-          if (isAnswered) {
-            if (index === question.correct) {
-              className += ' correct';
-            } else if (index === selectedOption) {
-              className += ' incorrect';
-            }
-          } else if (index === selectedOption) {
-            className += ' selected';
-          }
+      <div className="practice-question">{task.question}</div>
+      
+      <div className="practice-options">
+      {task.options.map((option, idx) => {
+        let className = 'practice-option';
+        if (answered) {
+          if (option === task.correct) className += ' correct';
+          else if (option === selected) className += ' incorrect';
+        } else if (option === selected) className += ' selected';
+        
 
-          return (
-            <button
-              key={index}
-              onClick={() => handleSelect(index)}
-              disabled={isAnswered}
-              className={className}
-            >
-              {option}
-            </button>
-          );
-        })}
+        return (
+          <button
+            key={idx}
+            onClick={() => handleSelect(option)}
+            disabled={answered}
+            className={className}
+          >
+            {option}
+          </button>
+        );
+      })}
       </div>
 
-      <div className="practice-card-footer">
-        <button
-          onClick={onPrev}
-          disabled={questionIndex === 0}
-          className={`practice-button ${questionIndex === 0 ? 'disabled' : ''}`}
-        >
-          ◀ {t('Prev')}
+      {answered && (
+        <div className="practice-explanation">
+          ✅ {task.explanation}
+        </div>
+      )}
+      <div className="practice-footer">
+        <button onClick={onPrev} disabled={taskIndex === 0}>
+          ◀ {t('prev')}
         </button>
-
-        <button
-          onClick={() => (isLast ? onFinish(isCorrect) : onNext(isCorrect))}
-          disabled={!isAnswered}
-          className={`practice-button ${!isAnswered ? 'disabled' : isLast ? 'finish' : 'primary'}`}
-        >
-          {isLast ? t('Finish') : t('Next')} ▶
-        </button>
+        
+        {isLast ? (
+          answered ? (
+            <button onClick={onFinish}>{t('finish')}</button>
+          ) : (
+            <button disabled>{t('selectAnswer')}</button>
+          )
+        ) : (
+          <button onClick={onNext} disabled={!answered}>
+            {t('next')} ▶
+          </button>
+        )}
       </div>
     </div>
   );

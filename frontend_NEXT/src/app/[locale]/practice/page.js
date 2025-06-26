@@ -2,91 +2,172 @@
 
 import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import useDailyPractice from './components/useDailyPractice';
 import PracticeCard from './components/PracticeCard';
+import { useTranslations } from 'next-intl';
 import styles from './page.module.css';
 
 export default function PracticePage() {
-  const [questions, setQuestions] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [showResult, setShowResult] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [showReview, setShowReview] = useState(true);
+  const [finished, setFinished] = useState(false);
+  const t = useTranslations('PracticeRoom');
 
-  useEffect(() => {
-    const exampleQuestions = [
-      {
-        id: 1,
-        question: 'What is the correct form of the verb: "He ___ to school every day."',
-        options: ['go', 'goes', 'gone'],
-        correct: 1,
-      },
-      {
-        id: 2,
-        question: 'Choose the correct article: "___ apple a day keeps the doctor away."',
-        options: ['A', 'An', 'The'],
-        correct: 1,
-      },
-      {
-        id: 3,
-        question: 'What is the plural of "child"?',
-        options: ['childs', 'children', 'childes'],
-        correct: 1,
-      },
-      {
-        id: 4,
-        question: 'What tense is used: "I have eaten breakfast"?',
-        options: ['Past Simple', 'Present Perfect', 'Past Perfect'],
-        correct: 1,
-      },
-      {
-        id: 5,
-        question: 'Which is a correct sentence?',
-        options: ['She don’t like it.', 'She doesn’t likes it.', 'She doesn’t like it.'],
-        correct: 2,
-      },
-    ];
-    
-    setQuestions(exampleQuestions);
-  }, []);
+  const {
+    tasks,
+    loading,
+    error,
+    currentIndex,
+    currentTask,
+    nextTask,
+    prevTask,
+    isLast,
+    resetIndex,
+    reset,
+  } = useDailyPractice();
 
-  const handleNext = (wasCorrect) => {
-    if (wasCorrect) setScore((prev) => prev + 1);
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
+  
+  const score = tasks.filter(t => t.answer === t.correct).length;
+  
+  const markAsFinished = () => {
+    if (!finished) {
+      setFinished(true);
     }
   };
 
-  const handlePrev = () => {
-    if (currentIndex > 0) setCurrentIndex((prev) => prev - 1);
+  useEffect(() => {
+    const allAnswered = tasks.length > 0 && tasks.every(t => t.answer !== null);
+    if (allAnswered) {
+      setFinished(true);
+      console.log('✅ finished',finished);
+    }
+  }, [tasks]);
+  
+  // ⛳ Автоматичне збереження при завершенні
+  useEffect(() => {
+    if (finished && !submitted) {
+      handleAutoSaveResult();
+    }
+  }, [finished]);
+
+  const handleShowResult = () => {
+    setShowReview(true);
+    console.log('✅ showReview',showReview, '✅ finished',finished);
+
   };
 
-  const handleFinish = (wasCorrect) => {
-    if (wasCorrect) setScore((prev) => prev + 1);
-    setShowResult(true);
+  const handleShowAnswer = () => {
+    resetIndex();
+    setShowReview(false);
+    setSubmitted(false);
   };
+
+  const handleAutoSaveResult = async () => {
+    if (submitted || tasks.length === 0) return;
+
+    const answeredTasks = tasks.filter(t => t.answer !== null);
+    if (answeredTasks.length !== tasks.length) return;
+
+    const payload = {
+      score,
+      total: tasks.length,
+      taskIds: answeredTasks.map(t => t.id),
+    };
+
+    try {
+      const res = await fetch('http://localhost:5000/api/practice/save-final', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        console.log('✅ Збережено та заархівовано:', data);
+        setSubmitted(true);
+      } else {
+        console.warn('⚠️ Невдала архівація:', data);
+      }
+    } catch (err) {
+      console.error('❌ Error saving progress:', err);
+    }
+  };
+
+  const handleRegeneratePractice = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/practice/clear-practice', {
+        method: 'POST',
+        credentials: 'include',
+      });
+  
+      const data = await res.json();
+      if (data.success) {
+        // Після очищення – регенеруємо нові
+        setFinished(false);
+        handleShowAnswer();
+        reset();
+      } else {
+        console.warn('❗ Помилка при очищенні:', data);
+      }
+    } catch (err) {
+      console.error('❌ Не вдалося очистити завдання:', err);
+    }
+  };
+
 
   return (
     <ProtectedRoute>
-      <div className={styles.wrapper}>
-        {!showResult ? (
-          questions.length > 0 && (
-            <PracticeCard
-              question={questions[currentIndex]}
-              questionIndex={currentIndex}
-              total={questions.length}
-              onNext={handleNext}
-              onPrev={handlePrev}
-              isLast={currentIndex === questions.length - 1}
-              onFinish={handleFinish}
-            />
-          )
-        ) : (
-          <div className={styles.result}>
-            ✅ Ви завершили практику!
-            <br />
-            Ваш результат: {score} / {questions.length}
+      {(finished && showReview) ? (
+        <div className={styles.summary}>
+          <h2>{t('completed')}</h2>
+          <p>{t('score', { score, total: tasks.length })} 
+            (<strong>{Math.round((score / tasks.length) * 100)}%</strong>)
+          </p>
+
+          <div className={styles.progressBarContainer}>
+            <div
+              className={styles.progressBar}
+              style={{ width: `${(score / tasks.length) * 100}%` }}
+            ></div>
           </div>
-        )}
-      </div>
+
+          <p className={styles.feedback}>
+            {score === tasks.length && t('feedback.perfect')}
+            {score >= tasks.length * 0.8 && score < tasks.length && t('feedback.good')}
+            {score >= tasks.length * 0.5 && score < tasks.length * 0.8 && t('feedback.average')}
+            {score < tasks.length * 0.5 && t('feedback.poor')}
+          </p>
+
+          <div className={styles.summaryButtons}>
+            <button onClick={handleShowAnswer}>{t('reviewAnswers')}</button>
+            <button onClick={handleRegeneratePractice}>{t('morePractice')}</button> 
+          </div>
+        </div>
+      ) : (
+        <div className={styles.wrapper}>
+          {loading && <p className={styles.loading}>🔄 {t('loading')}</p>}
+          {error && <p className={styles.error}>❌ {t('error')}: {error}</p>}
+
+          {!loading && !error && !currentTask && (
+            <p className={styles.info}>ℹ️ {t('noTasks')}</p>
+          )}
+  
+          {!loading && currentTask && (
+            <PracticeCard
+              task={currentTask}
+              taskIndex={currentIndex}
+              total={tasks.length}
+              onNext={nextTask}
+              onPrev={prevTask}
+              onFinish={handleShowResult}
+              isLast={isLast}
+              markAsFinished={markAsFinished}
+            />
+          )}
+        </div>
+      )}
     </ProtectedRoute>
   );
 }

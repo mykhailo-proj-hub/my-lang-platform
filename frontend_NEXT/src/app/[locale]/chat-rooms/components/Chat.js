@@ -174,23 +174,33 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
 
   const fetchImproved = async (text) => {
     try {
-      const res = await fetch('http://localhost:5000/api/ai/improve', {
+      // UX: швидке покращення
+      const res = await fetch('http://localhost:5000/api/ai/improveMessage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ content: text }),
       });
   
-      if (!res.ok) {
-        throw new Error('Failed to improve message');
-      }
+      if (!res.ok) throw new Error('Failed to improve message');
   
       const data = await res.json();
+  
+      // 🎯 У фоні — збереження в corrections
+      fetch('http://localhost:5000/api/ai/analyzeMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ message: text }), // або додай messageId, якщо вже є
+      }).catch(err => {
+        console.warn('AnalyzeMessage in background failed:', err);
+      });
+  
       return data.improved;
     } catch (err) {
       console.error(err);
       toast.error('Помилка під час обробки повідомлення AI');
-      throw err; // щоб handleSubmit міг зреагувати
+      throw err;
     }
   };
     

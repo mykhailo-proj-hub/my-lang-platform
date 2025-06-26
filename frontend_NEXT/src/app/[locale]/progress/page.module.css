@@ -1,52 +1,116 @@
-.container {
+.wrapper {
+  background-image: url('/progress/ProgressTracker.svg');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.progressPage {
+  max-width: 900px;
+  margin: 30px auto;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8); /* Напівпрозорий білий фон */
+  backdrop-filter: blur(7px); /* Ефект блюру */
+  border-radius: 16px; /* Більш округлені кути */
   padding: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: static;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); /* М'яка тінь */
 }
 
-.title {
-  font-size: 28px;
-  font-weight: bold;
-  margin-bottom: 1rem;
+.sectionTitle {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #333;
+  text-align: center; /* Центрування заголовків */
 }
 
-.description {
-  font-size: 16px;
+.analyticsSection,
+.achievementsSection,
+.practiceStatsSection {
   margin-bottom: 2rem;
-  color: #555;
+}
+
+.analyticsBox,
+.recommendationsBox {
+  background: #f9f9f9; /* Світлий фон для секцій */
+  padding: 1.5rem;
+  border-radius: 12px; /* Більш округлені кути */
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* М'яка тінь */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.analyticsBox:hover,
+.recommendationsBox:hover {
+  transform: translateY(-5px); /* Легке підняття при наведенні */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); /* Більш виразна тінь */
+}
+
+.analyticsBox p,
+.recommendationsBox p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: #444; /* Темний текст */
+}
+
+.achievementList {
+  background: #eaf4fc;
+  padding: 1.5rem;
+  border-left: 4px solid #0077cc;
+  border-radius: 12px; /* Більш округлені кути */
+  font-size: 1.05rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Легка тінь */
 }
 
 .statsBox {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.5rem;
 }
 
 .statItem {
-  background-color: #f9f9f9;
-  border-radius: 12px;
-  padding: 1rem;
+  background: #ffffff; /* Білий фон для статистики */
+  border-radius: 12px; /* Більш округлені кути */
+  padding: 1.25rem;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Легка тінь */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.statItem:hover {
+  transform: translateY(-5px); /* Легке підняття при наведенні */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); /* Більш виразна тінь */
 }
 
 .statItem h3 {
-  font-size: 16px;
-  margin-bottom: 0.5rem;
-  color: #333;
+  margin: 0;
+  font-size: 1.2rem;
+  color: #0077cc; /* Синій акцент для заголовків */
 }
 
 .statItem p {
-  font-size: 20px;
+  margin-top: 0.5rem;
+  font-size: 1.5rem;
   font-weight: bold;
-  color: #0070f3;
+  color: #222;
 }
 
-.chartPlaceholder {
-  text-align: center;
-  padding: 2rem;
-  border: 2px dashed #ccc;
-  border-radius: 12px;
-  color: #888;
+@media (max-width: 768px) {
+  .progressPage {
+    padding: 1rem;
+  }
+
+  .statsBox {
+    grid-template-columns: 1fr; /* Одноколонна сітка на маленьких екранах */
+  }
+
+  .analyticsBox,
+  .recommendationsBox {
+    padding: 1rem;
+  }
 }

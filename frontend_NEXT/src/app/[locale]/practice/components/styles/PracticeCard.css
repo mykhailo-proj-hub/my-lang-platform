@@ -1,76 +1,102 @@
 .practice-card {
-    border: 1px solid #ccc;
-    border-radius: 16px;
-    padding: 2rem;
-    max-width: 600px;
-    width: 100%;
-    background-color: #fff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .practice-card-header {
-    margin-bottom: 1rem;
-    font-size: 18px;
-    font-weight: bold;
-  }
-  
-  .practice-card-question {
-    margin-bottom: 1.5rem;
-    font-size: 16px;
-  }
-  
-  .practice-option {
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    border: 2px solid #ccc;
-    background-color: #f8f9fa;
-    text-align: left;
-    font-size: 15px;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-  }
-  
-  .practice-option.correct {
-    background-color: #d4edda;
-    border-color: #28a745;
-  }
-  
-  .practice-option.incorrect {
-    background-color: #f8d7da;
-    border-color: #dc3545;
-  }
-  
-  .practice-option.selected {
-    background-color: #e2e3e5;
-    border-color: #6c757d;
-  }
-  
-  .practice-card-footer {
-    margin-top: 2rem;
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .practice-button {
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    cursor: pointer;
-  }
-  
-  .practice-button.disabled {
-    background-color: #e2e3e5;
-    color: #6c757d;
-    cursor: not-allowed;
-  }
-  
-  .practice-button.primary {
-    background-color: #007bff;
-    color: #fff;
-  }
-  
-  .practice-button.finish {
-    background-color: #28a745;
-    color: #fff;
-  }
-  
+  width: 90%;
+  background: #ffffff; /* Чистий білий фон */
+  border-radius: 16px; /* Більш округлені кути */
+  padding: 2rem; /* Збільшені відступи */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); /* М'яка тінь */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.practice-card:hover {
+  transform: translateY(-5px); /* Легке підняття при наведенні */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* Більш виразна тінь */
+}
+
+.practice-card-header {
+  font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 1.5rem;
+  color: #333333; /* Темний текст */
+}
+
+.practice-theory {
+  background: #eef4ff; /* Світлий синій фон */
+  padding: 1.5rem;
+  border-left: 4px solid #4676d7; /* Акцентна синя лінія */
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+}
+
+.practice-question {
+  font-size: 18px;
+  margin-bottom: 1.5rem;
+  color: #444444; /* Темний текст */
+}
+
+.practice-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* Більший розрив між опціями */
+}
+
+.practice-option {
+  padding: 1rem 1.5rem; /* Збільшені відступи */
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  text-align: left;
+  background: #f9f9f9;
+  cursor: pointer;
+  transition: background 0.3s ease, border 0.3s ease;
+}
+
+.practice-option:hover {
+  background: #f0f0f0; /* Світліший фон при наведенні */
+}
+
+.practice-option.selected {
+  border: 2px solid #007bff; /* Синій акцент */
+  background: #e7f1ff; /* Світлий синій фон */
+}
+
+.practice-option.correct {
+  background-color: #d4edda;
+  border: 1px solid #28a745;
+  color: #155724;
+}
+
+.practice-option.incorrect {
+  background-color: #f8d7da;
+  border: 1px solid #dc3545;
+  color: #721c24;
+}
+
+.practice-explanation {
+  margin-top: 1.5rem;
+  font-style: italic;
+  color: #555555; /* Темний текст */
+}
+
+.practice-footer {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.practice-footer button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background: #007bff;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.practice-footer button:hover {
+  background: #0056b3; /* Темніший синій при наведенні */
+}
+
+.practice-footer button:disabled {
+  background: #cccccc; /* Сірий фон для неактивних кнопок */
+  cursor: not-allowed;
+}

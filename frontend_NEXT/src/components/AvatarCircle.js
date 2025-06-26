@@ -21,7 +21,7 @@ export default function AvatarCircle({ username = '', avatar = null, size = 45 }
   ) : (
     <div
       className="avatar"
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, userSelect: 'none' }}
     >
       {username && username.trim() !== '' ? getInitials(username) : '👤'}
     </div>
