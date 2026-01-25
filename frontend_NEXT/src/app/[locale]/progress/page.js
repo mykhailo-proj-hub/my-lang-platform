@@ -10,22 +10,39 @@ export default function ProgressPage() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    const mockData = {
-      chatsCreated: 20,
-      messagesSent: 350,
-      averageDuration: '15 min',
-      recommendedTopics: ['AI', 'Technology'],
-      weeklyTargets: {
-        newTopics: 5,
-        unanswered: 3,
-      },
-      totalSessions: 8,
-      correctAnswers: 37,
-      incorrectAnswers: 13,
-      lastPracticeDate: '2025-05-10',
+    const fetchAnalytics = async () => {
+      try {
+        const [chatRes, practiceRes] = await Promise.all([
+          fetch('http://localhost:5000/api/analytics/chat', { credentials: 'include' }),
+          fetch('http://localhost:5000/api/analytics/practice', { credentials: 'include' }),
+        ]);
+  
+        if (!chatRes.ok || !practiceRes.ok) {
+          throw new Error('Не вдалося отримати дані');
+        }
+  
+        const chatData = await chatRes.json();
+        const practiceData = await practiceRes.json();
+  
+        const enrichedData = {
+          ...chatData,
+          ...practiceData,
+          recommendedTopics: ['AI', 'Technology'],
+          weeklyTargets: {
+            newTopics: 5,
+            unanswered: 3,
+          },
+        };
+  
+        setData(enrichedData);
+      } catch (err) {
+        console.error('❌ Помилка отримання аналітики:', err);
+      }
     };
-    setData(mockData);
+  
+    fetchAnalytics();
   }, []);
+  
 
   return (
     

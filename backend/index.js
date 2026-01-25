@@ -7,6 +7,7 @@ const authRoutes = require("./src/routes/auth");
 const chatRoutes = require('./src/routes/chat');
 const practiceRoutes = require('./src/routes/practice');
 const aiRoutes = require('./src/routes/ai');
+const analyticsRoutes = require('./src/routes/analytics');
 const initializeSocket = require('./src/socket'); // Імпорт сокетів
 
 const app = express();
@@ -23,7 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use('/api/chat', chatRoutes(io));
 app.use('/api/ai', aiRoutes);
 app.use('/api/practice', practiceRoutes);
-
+app.use('/api/analytics', analyticsRoutes);
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

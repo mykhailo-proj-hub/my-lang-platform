@@ -46,94 +46,93 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
   
   const bottomRef = useRef(null);
 
-  if (!room?.id || !room?.participants || !currentUserId) return null;
-
+  
   useEffect(() => {
     if (!room?.id) return;
-
+    
     console.log('[LOAD MESSAGES] Triggered for room.id:', room.id);
-
+    
     const controller = new AbortController();
-
+    
     fetch(`http://localhost:5000/api/chat/chat-rooms/${room.id}/messages`, {
       credentials: 'include',
       signal: controller.signal,
     })
+    .then(res => {
+      if (!room?.id || !room?.participants || !currentUserId) return null;
+      console.log('room.id тип:', typeof room.id, 'значення:', room.id);
+      if (!res.ok) throw new Error();
+      return res.json();
+    })
+    .then(data => {
+      if (!Array.isArray(data.messages)) throw new Error();
+      setMessages(data.messages);
+      
+      // Виклик для зміни статусу повідомлень
+      fetch(`http://localhost:5000/api/chat/chat-rooms/${room.id}/change_message_status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      })
       .then(res => {
-        if (!room?.id || !room?.participants || !currentUserId) return null;
-        console.log('room.id тип:', typeof room.id, 'значення:', room.id);
-        if (!res.ok) throw new Error();
+        if (!res.ok) throw new Error('Failed to update message status');
         return res.json();
       })
       .then(data => {
-        if (!Array.isArray(data.messages)) throw new Error();
-        setMessages(data.messages);
-  
-        // Виклик для зміни статусу повідомлень
-        fetch(`http://localhost:5000/api/chat/chat-rooms/${room.id}/change_message_status`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        })
-          .then(res => {
-            if (!res.ok) throw new Error('Failed to update message status');
-            return res.json();
-          })
-          .then(data => {
-            console.log('Message status updated:', data);
-          })
-          .catch(err => {
-            console.error('Error updating message status:', err);
-          });
+        console.log('Message status updated:', data);
       })
       .catch(err => {
-        if (err.name !== 'AbortError') {
-          toast.error(t('errorFetch'));
-          console.error('❌ Fetch failed:', err);
-        }
+        console.error('Error updating message status:', err);
       });
-  
+    })
+    .catch(err => {
+      if (err.name !== 'AbortError') {
+        toast.error(t('errorFetch'));
+        console.error('❌ Fetch failed:', err);
+      }
+    });
+    
     return () => controller.abort(); // 💣 Аборт запиту при зміні room
   }, [room.id, t]);
-
+  
   const highlightedRef = useRef(null);
-
+  
   useEffect(() => {
     if (highlightedMessageId && highlightedRef.current) {
       highlightedRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       highlightedRef.current.classList.add('highlight');
-  
+      
       const timeout = setTimeout(() => {
         highlightedRef.current?.classList.remove('highlight');
       }, 1500);
-  
+      
       return () => clearTimeout(timeout);
     } else if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, highlightedMessageId]);
   
-
+  
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  const trimmed = input.trim();
-  if (!trimmed) return;
-
-  if (improveEnabled) {
+    e.preventDefault();
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    
+    if (improveEnabled) {
       try {
-      const improved = await fetchImproved(trimmed);
-      setPreview({ original: trimmed, improved });
+        const improved = await fetchImproved(trimmed);
+        setPreview({ original: trimmed, improved });
       } catch (err) {
-      toast.error('Помилка при покращенні');
+        toast.error('Помилка при покращенні');
       }
-  } else {
+    } else {
       sendMessage(trimmed);
       setInput('');
-  }
+    }
   };
-
+  
   // Підписка на нові повідомлення при зміні кімнати
   useEffect(() => {
     if (!room?.id) return;
@@ -148,30 +147,30 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
     };
 
     socket.on('newMessage', handleNewMessage);
-
+    
     return () => {
       socket.off('newMessage', handleNewMessage);
     };
   }, [room.id]);
   
-
-    
+  
+  
   const sendMessage = (text) => {
     const socket = getSocket();
     if (!socket) {
       toast.error('Socket not connected');
       return;
     }
-
+    
     const messageData = {
       content: text,
       roomId: room.id,
       senderId: currentUserId,
     };
-
+    
     socket.emit('sendMessage', messageData);
   };
-
+  
   const fetchImproved = async (text) => {
     try {
       // UX: швидке покращення
@@ -181,11 +180,11 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
         credentials: 'include',
         body: JSON.stringify({ content: text }),
       });
-  
+      
       if (!res.ok) throw new Error('Failed to improve message');
-  
+      
       const data = await res.json();
-  
+      
       // 🎯 У фоні — збереження в corrections
       fetch('http://localhost:5000/api/ai/analyzeMessage', {
         method: 'POST',
@@ -195,7 +194,7 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
       }).catch(err => {
         console.warn('AnalyzeMessage in background failed:', err);
       });
-  
+      
       return data.improved;
     } catch (err) {
       console.error(err);
@@ -203,14 +202,19 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
       throw err;
     }
   };
-    
-  const otherUser = room?.participants?.find(p => p.id !== currentUserId);
   
-    if (!room?.participants) {
+  if (!room?.id || !room?.participants || !currentUserId) {
+    console.warn('Chat: missing required room or user data');
+    return null;
+  }
+
+  if (!room?.participants) {
     console.warn('Chat: room.participants is missing');
     return null;
   }
 
+  const otherUser = room?.participants?.find(p => p.id !== currentUserId);
+  
   return (
     <div className="chat-container">
       {/* 🧭 Header */}
@@ -223,7 +227,7 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
           username={otherUser?.username}
           avatar={otherUser?.avatar}
           size={40}
-        />
+          />
         <div className="chat-header-text">
           <p className="chat-header-name">
             {otherUser?.username || 'Очікуємо співрозмовника'}
@@ -239,7 +243,7 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
                     type="checkbox"
                     checked={improveEnabled}
                     onChange={() => setImproveEnabled(!improveEnabled)}
-                />
+                    />
                 {t('AI Improved')}
                 </label>
                 <button

@@ -1,6 +1,9 @@
 const fetch = require('node-fetch');
 const prisma = require('../prismaClient');
 
+const removeQuotes = require('../utils/removeQuotes');
+const isMessageValid = require('../utils/isMessageValid');
+
 // ===== Виправлення повідомлення =====
 exports.improveMessage = async (req, res) => {
   const { content } = req.body;
@@ -12,6 +15,24 @@ exports.improveMessage = async (req, res) => {
 
   if (!content || typeof content !== 'string' || content.trim().length === 0) {
     return res.status(400).json({ error: 'Invalid or empty content' });
+  }
+
+  // === 🧹 Відсіювання як в analyzeMessage ===
+  const cleaned = content.trim().toLowerCase();
+
+  const garbageRegex = /^(\p{P}|\p{S}|\s)*$/u;
+  if (cleaned.length < 3 || garbageRegex.test(cleaned)) {
+    return res.status(400).json({ error: 'Message is too short or invalid for improvement' });
+  }
+
+  const commonUseless = ['ok', 'okay', 'hmm', 'uh', 'yo', 'a', 'b', 'nope'];
+  if (commonUseless.includes(cleaned)) {
+    return res.status(400).json({ error: 'Message is not meaningful for improvement' });
+  }
+
+  const repeatedChar = /^([a-zA-Zа-яА-ЯёЁ0-9.,!?])\1{2,}$/u;
+  if (repeatedChar.test(cleaned)) {
+    return res.status(400).json({ error: 'Message is repeated single character' });
   }
 
   try {
@@ -32,7 +53,6 @@ exports.improveMessage = async (req, res) => {
           {
             role: 'user',
             content: `Please improve this English sentence grammatically and stylistically without changing its meaning:\n"${content}"`,
-
           },
         ],
         temperature: 0.6,
@@ -47,12 +67,17 @@ exports.improveMessage = async (req, res) => {
     }
 
     const data = await response.json();
-    const improved = data.choices?.[0]?.message?.content?.trim();
+    let improved = data.choices?.[0]?.message?.content?.trim();
 
     if (!improved) {
       throw new Error('No valid response from OpenAI');
     }
 
+    const removeQuotes = (text) => {
+      return text.trim().replace(/^["'“”‘’«»„‚‹›](.*?)[“”‘’"'\«»„‚‹›]$/, '$1');
+    };
+
+    improved = removeQuotes(improved);
     res.json({ improved });
   } catch (err) {
     console.error('Improve API error:', err);
@@ -60,35 +85,21 @@ exports.improveMessage = async (req, res) => {
   }
 };
 
-
-// ===== Аналіз помилки =====
+// ===== Аналіз повідомлення (граматика) =====
 exports.analyzeMessage = async (req, res) => {
   const { message, messageId } = req.body;
   const apiKey = process.env.OPENAI_API_KEY;
-  
-  if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY is not set' });
-  if (!message || typeof message !== 'string' || message.trim().length === 0)
+
+  if (!apiKey) {
+    return res.status(500).json({ error: 'OPENAI_API_KEY is not set' });
+  }
+
+  if (!message || typeof message !== 'string' || message.trim().length === 0) {
     return res.status(400).json({ error: 'Invalid or empty message' });
-  
-  // === 🧹 Відсіювання непотрібних повідомлень ===
-  const cleaned = message.trim().toLowerCase();
-  
-  // Мінімальна довжина / символи без змісту
-  const garbageRegex = /^(\p{P}|\p{S}|\s)*$/u; // Юнікод — пунктуація, символи
-  if (cleaned.length < 3 || garbageRegex.test(cleaned)) {
-    return res.status(400).json({ error: 'Message is too short or invalid for analysis' });
   }
-  
-  // Варіант із стоп-словами, якщо треба
-  const commonUseless = ['ok', 'okay', 'hmm', 'uh', 'yo', 'a', 'b', 'nope'];
-  if (commonUseless.includes(cleaned)) {
-    return res.status(400).json({ error: 'Message is not meaningful for analysis' });
-  }
-  
-  // Повтор одного символу більше 2 разів, наприклад "aaa", "!!!", "hhh"
-  const repeatedChar = /^([a-zA-Zа-яА-ЯёЁ0-9.,!?])\1{2,}$/u;
-  if (repeatedChar.test(cleaned)) {
-    return res.status(400).json({ error: 'Message is repeated single character' });
+
+  if (!isMessageValid(message)) {
+    return res.status(400).json({ error: 'Message is not valid for analysis' });
   }
 
   try {
@@ -136,12 +147,22 @@ exports.analyzeMessage = async (req, res) => {
       return res.status(500).json({ error: 'Failed to parse AI response', raw: content });
     }
 
-    const { corrected, explanation, type } = parsed;
+    let { corrected, explanation, type } = parsed;
 
     if (!corrected || !explanation || !type) {
       return res.status(400).json({ error: 'Incomplete AI response', raw: parsed });
     }
 
+    // Очистити лапки
+    corrected = removeQuotes(corrected);
+
+    // Перевірка типу помилки
+    const validTypes = ['tense', 'article', 'preposition', 'verb_agreement', 'word_order', 'plural', 'spelling', 'other'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ error: 'Invalid correction type', type, raw: parsed });
+    }
+
+    // Зберегти у БД, якщо передано messageId
     if (messageId) {
       await prisma.corrections.create({
         data: {
