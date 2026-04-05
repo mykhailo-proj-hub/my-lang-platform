@@ -86,35 +86,23 @@ my-lang-platform/
 ## Installation and Local Setup
 
 ### 1. Clone the repository
-
-git clone https://github.com/mykhailo-proj-hub/my-lang-platform.git  
+git clone https://github.com/mykhailo-proj-hub/my-lang-platform.git
 cd my-lang-platform
 
-### 2. Install dependencies
+### 2. Configure environment variables
 
-npm install
+Create a .env file in the backend directory:
 
-### 3. Environment variables
+PORT=5000
+DATABASE_URL=postgresql://postgres:password@db:5432/lang_platformdb
+JWT_SECRET=your_jwt_secret
+OPENAI_API_KEY=your_openai_api_key
 
-Create a `.env` file in the backend directory like:
+### 3. Build Docker images
+docker compose build
 
-PORT=5000  
-DATABASE_URL=postgresql://user:password@localhost:5432/database  
-JWT_SECRET=your_jwt_secret  
-OPENAI_API_KEY=your_openai_api_key  
-
-### 4. Database setup
-
-npx prisma migrate dev --schema=backend/prisma/schema.prisma
-
-### 5. Run the application
-
-npm run dev
-
-Frontend runs on: http://localhost:3000  
-Backend API runs on: http://localhost:5000
-
----
+### 4. Start the database
+docker compose up -d
 
 ## Key Functionality Details
 
