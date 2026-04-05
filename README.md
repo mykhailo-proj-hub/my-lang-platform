@@ -105,7 +105,7 @@ OPENAI_API_KEY=your_openai_api_key
 
 ### 4. Database setup
 
-npx prisma migrate dev
+npx prisma migrate dev --schema=backend/prisma/schema.prisma
 
 ### 5. Run the application
 
