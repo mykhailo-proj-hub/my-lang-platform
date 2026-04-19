@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { debounce } from 'lodash';
 import ChatRoomItem from './ChatRoomItem';
 import UserSearchItem from './UserSearchItem';
+import { apiUrl } from '@/lib/api';
 import './styles/ChatRoomList.css';
 
 export default function ChatRoomsList({ currentUserId, locale, rooms, loading, setRooms, setActiveRoom: handleSetActiveRoom }) {  const t = useTranslations('ChatRoom');
@@ -54,7 +55,7 @@ export default function ChatRoomsList({ currentUserId, locale, rooms, loading, s
 
 const fetchRooms = useCallback(debounce((searchTerm) => {
   setLoadingRooms(true);
-  const url = new URL('http://localhost:5000/api/chat/chat-rooms');
+  const url = new URL(apiUrl('/api/chat/chat-rooms'));
   if (searchTerm) url.searchParams.append('search', searchTerm);
   
   fetch(url, { credentials: 'include' })
@@ -82,7 +83,7 @@ const handleSearchChange = async (e) => {
     if (tag.length > 2) {
       setTagSearchLoading(true);
       try {
-        const res = await fetch(`http://localhost:5000/api/chat/chat-rooms/search-user?tag=${tag}`, {
+        const res = await fetch(apiUrl(`/api/chat/chat-rooms/search-user?tag=${tag}`), {
           credentials: 'include'
         });
 
@@ -111,7 +112,7 @@ const handleSearchChange = async (e) => {
   
 const handleCreateChatWithUser = async (user) => {
   try {
-    const res = await fetch('http://localhost:5000/api/chat/chat-rooms', {
+    const res = await fetch(apiUrl('/api/chat/chat-rooms'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

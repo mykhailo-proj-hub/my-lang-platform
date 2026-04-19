@@ -1,39 +1,96 @@
-version: '3.9'
-
 services:
-  frontend:
-    build: ./frontend_NEXT
-    container_name: frontend_next
-    ports:
-      - "3000:3000"
-    restart: always
-    depends_on:
-      - backend
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lang_platformdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-lang_platformdb}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
 
   backend:
-    build: ./backend
-    container_name: backend_server
-    ports:
-      - "5000:5000"
-    restart: always
-    env_file:
-      - ./backend/.env
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
     depends_on:
-      - db
-
-  db:
-    image: postgres:17
-    container_name: postgres_db
-    restart: always
+      db:
+        condition: service_healthy
     environment:
-      POSTGRES_DB: lang_platformdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./db-init:/docker-entrypoint-initdb.d
+      PORT: 5000
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-lang_platformdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
+    secrets:
+      - postgres_password
+      - jwt_secret
+      - openai_api_key
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:5000/health').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend_NEXT
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000}
+        NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:5000}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      INTERNAL_API_URL: http://backend:5000
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
 volumes:
-  pgdata:
+  postgres_data:
+  backend_node_modules:
+  frontend_node_modules:
+  frontend_next_cache:
+
+secrets:
+  postgres_password:
+    file: ${POSTGRES_PASSWORD_FILE:-./secrets/postgres_password.txt}
+  jwt_secret:
+    file: ${JWT_SECRET_FILE:-./secrets/jwt_secret.txt}
+  openai_api_key:
+    file: ${OPENAI_API_KEY_FILE:-./secrets/openai_api_key.txt}

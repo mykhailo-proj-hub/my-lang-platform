@@ -7,6 +7,7 @@ import { FiArrowLeft, FiSmile, FiPaperclip, FiSend, FiInfo } from 'react-icons/f
 import AvatarCircle from '@/components/AvatarCircle';
 import ImprovedPreviewBar from './ImprovedPreviewBar';
 import { getSocket } from '@/../socket';
+import { apiUrl } from '@/lib/api';
 import './styles/Chat.css';
 
 export default function Chat({ room, currentUserId, locale, onClose, highlightedMessageId }) {
@@ -54,7 +55,7 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
     
     const controller = new AbortController();
     
-    fetch(`http://localhost:5000/api/chat/chat-rooms/${room.id}/messages`, {
+    fetch(apiUrl(`/api/chat/chat-rooms/${room.id}/messages`), {
       credentials: 'include',
       signal: controller.signal,
     })
@@ -69,7 +70,7 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
       setMessages(data.messages);
       
       // Виклик для зміни статусу повідомлень
-      fetch(`http://localhost:5000/api/chat/chat-rooms/${room.id}/change_message_status`, {
+      fetch(apiUrl(`/api/chat/chat-rooms/${room.id}/change_message_status`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -174,7 +175,7 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
   const fetchImproved = async (text) => {
     try {
       // UX: швидке покращення
-      const res = await fetch('http://localhost:5000/api/ai/improveMessage', {
+      const res = await fetch(apiUrl('/api/ai/improveMessage'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -186,7 +187,7 @@ export default function Chat({ room, currentUserId, locale, onClose, highlighted
       const data = await res.json();
       
       // 🎯 У фоні — збереження в corrections
-      fetch('http://localhost:5000/api/ai/analyzeMessage', {
+      fetch(apiUrl('/api/ai/analyzeMessage'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

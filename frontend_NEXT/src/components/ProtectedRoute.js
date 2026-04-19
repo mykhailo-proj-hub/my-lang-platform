@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { apiUrl } from '@/lib/api';
 
 export default function ProtectedRoute({ children }) {
   const [authorized, setAuthorized] = useState(null);
@@ -11,7 +12,7 @@ export default function ProtectedRoute({ children }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/auth/me', {
+        const res = await fetch(apiUrl('/api/auth/me'), {
           credentials: 'include'
         });
 

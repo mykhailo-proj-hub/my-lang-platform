@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { apiUrl } from '@/lib/api';
 
 export default function useDailyPractice() {
   const [tasks, setTasks] = useState([]);
@@ -9,7 +10,7 @@ export default function useDailyPractice() {
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/practice/getDailyPractice', {
+      const res = await fetch(apiUrl('/api/practice/getDailyPractice'), {
         credentials: 'include',
       });
 

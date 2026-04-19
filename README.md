@@ -73,17 +73,25 @@ The project follows a client-server architecture:
 
 ## Project Structure (simplified)
 
+Current repository layout for Docker:
+- `frontend_NEXT/`
+- `backend/`
+- `db-init/`
+- `docker-compose.yml`
+- `docker-compose.dev.yml`
+- `docker-compose.prod.yml`
+
 my-lang-platform/
-├── frontend/
+├── frontend_NEXT/
 ├── backend/
-├── prisma/
-├── public/
+├── db-init/
+├── docker-compose.yml
 ├── README.md
 └── package.json
 
 ---
 
-## Installation and Local Setup
+## Docker Setup
 
 ### 1. Clone the repository
 git clone https://github.com/mykhailo-proj-hub/my-lang-platform.git
@@ -91,18 +99,50 @@ cd my-lang-platform
 
 ### 2. Configure environment variables
 
-Create a .env file in the backend directory:
+Create a root `.env` file from `.env.example`:
 
-PORT=5000
-DATABASE_URL=postgresql://postgres:password@db:5432/lang_platformdb
-JWT_SECRET=your_jwt_secret
-OPENAI_API_KEY=your_openai_api_key
+POSTGRES_DB=lang_platformdb
+POSTGRES_USER=postgres
+DB_PORT=5432
+BACKEND_PORT=5000
+FRONTEND_PORT=3000
+POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt
+JWT_SECRET_FILE=./secrets/jwt_secret.txt
+OPENAI_API_KEY_FILE=./secrets/openai_api_key.txt
+FRONTEND_ORIGIN=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
 
-### 3. Build Docker images
-docker compose build
+### 3. Create Docker Secrets files
+Copy the templates from `secrets/` and put real values into:
+- `secrets/postgres_password.txt`
+- `secrets/jwt_secret.txt`
+- `secrets/openai_api_key.txt`
 
-### 4. Start the database
-docker compose up -d
+### 4. Start development mode
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+### 5. Start production-style mode
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+
+### 6. Open the app
+- Frontend: http://localhost:3000
+- Backend healthcheck: http://localhost:5000/health
+- PostgreSQL: localhost:5432
+
+### Notes
+- `docker-compose.yml` is the shared base config
+- `docker-compose.dev.yml` enables bind mounts, `nodemon`, and `next dev`
+- `docker-compose.prod.yml` uses production images and does not expose PostgreSQL by default
+- `backend` production image uses a multi-stage build, installs only production dependencies, and runs as a non-root user
+- `frontend` production image uses Next.js standalone output and a separate lightweight runtime stage
+- `backend` runs `prisma migrate deploy` automatically on container start
+- in `development`, `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_SOCKET_URL` are runtime env variables for `next dev`
+- in `production-style`, `NEXT_PUBLIC_*` are build-time values baked into the client bundle during image build; changing them requires rebuild, not just container restart
+- `INTERNAL_API_URL` remains a runtime variable for server-side requests inside the frontend container
+- secrets are mounted through Docker Secrets from `/run/secrets/...`
+- `backend/.env.example` can still be used for non-Docker local development
+- if ports `3000`, `5000` or `5432` are already busy, change `FRONTEND_PORT`, `BACKEND_PORT`, `DB_PORT` and matching URL variables in `.env`
 
 ## Key Functionality Details
 

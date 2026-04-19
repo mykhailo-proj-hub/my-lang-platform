@@ -5,6 +5,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import useDailyPractice from './components/useDailyPractice';
 import PracticeCard from './components/PracticeCard';
 import { useTranslations } from 'next-intl';
+import { apiUrl } from '@/lib/api';
 import styles from './page.module.css';
 
 export default function PracticePage() {
@@ -75,7 +76,7 @@ export default function PracticePage() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/practice/save-final', {
+      const res = await fetch(apiUrl('/api/practice/save-final'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -97,7 +98,7 @@ export default function PracticePage() {
 
   const handleRegeneratePractice = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/practice/clear-practice', {
+      const res = await fetch(apiUrl('/api/practice/clear-practice'), {
         method: 'POST',
         credentials: 'include',
       });

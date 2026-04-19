@@ -1,14 +1,18 @@
 // socket.js
 import { io } from 'socket.io-client';
+import { socketUrl } from './src/lib/api';
 
 let socket;
 
-export const initSocket = (onError) => {
+export const initSocket = (userId, onError) => {
   if (socket) return;
 
-  socket = io('http://localhost:5000', {
+  socket = io(socketUrl, {
     auth: {
       token: localStorage.getItem('jwt')
+    },
+    query: {
+      userId,
     },
     withCredentials: true,
     autoConnect: true,

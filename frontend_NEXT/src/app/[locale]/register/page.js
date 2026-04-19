@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { apiUrl } from '@/lib/api';
 import styles from './page.module.css';
 
 export default function RegisterPage() {
@@ -40,7 +41,7 @@ export default function RegisterPage() {
   
     toast.loading(t('loading'), { id: 'register' });
   
-    const res = await fetch('http://localhost:5000/api/auth/register', {
+    const res = await fetch(apiUrl('/api/auth/register'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),

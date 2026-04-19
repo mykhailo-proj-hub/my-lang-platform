@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { apiUrl } from '@/lib/api';
 import styles from './page.module.css';
 
 export default function ProgressPage() {
@@ -13,8 +14,8 @@ export default function ProgressPage() {
     const fetchAnalytics = async () => {
       try {
         const [chatRes, practiceRes] = await Promise.all([
-          fetch('http://localhost:5000/api/analytics/chat', { credentials: 'include' }),
-          fetch('http://localhost:5000/api/analytics/practice', { credentials: 'include' }),
+          fetch(apiUrl('/api/analytics/chat'), { credentials: 'include' }),
+          fetch(apiUrl('/api/analytics/practice'), { credentials: 'include' }),
         ]);
   
         if (!chatRes.ok || !practiceRes.ok) {

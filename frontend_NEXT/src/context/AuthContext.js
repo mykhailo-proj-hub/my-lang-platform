@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { initSocket, disconnectSocket } from '../../socket';
+import { apiUrl } from '@/lib/api';
 
 export const AuthContext = createContext();
 
@@ -14,7 +15,7 @@ export function AuthProvider({ children }) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
 
-      const res = await fetch('http://localhost:5000/api/auth/me', {
+      const res = await fetch(apiUrl('/api/auth/me'), {
         credentials: 'include',
         signal: controller.signal,
       });
@@ -56,7 +57,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await fetch('http://localhost:5000/api/auth/logout', {
+      await fetch(apiUrl('/api/auth/logout'), {
         method: 'POST',
         credentials: 'include',
       });

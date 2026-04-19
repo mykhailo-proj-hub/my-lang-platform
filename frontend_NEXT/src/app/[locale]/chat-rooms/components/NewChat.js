@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'react-hot-toast';
 import { useRouter, useParams } from 'next/navigation';
+import { apiUrl } from '@/lib/api';
 import './styles/NewChat.css';
 
 export default function NewChat({ theme, setTheme, creating, setCreating }) {
@@ -24,7 +25,7 @@ export default function NewChat({ theme, setTheme, creating, setCreating }) {
     }
     setCreating(true);
     try {
-      const res = await fetch('http://localhost:5000/api/chat/chat-rooms', {
+      const res = await fetch(apiUrl('/api/chat/chat-rooms'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

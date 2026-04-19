@@ -10,6 +10,7 @@ import ChatRoomsList from './components/ChatRoomsList';
 import Chat from './components/Chat';
 import NewChat from './components/NewChat';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { apiUrl } from '@/lib/api';
 import styles from './page.module.css';
 import './components/styles/Split.css';
 
@@ -93,7 +94,7 @@ export default function ChatRoomsPage() {
       if (roomFromList) {
           setActiveRoom(roomFromList);
       } else {
-        fetch(`http://localhost:5000/api/chat/chat-rooms/${roomId}`, {
+        fetch(apiUrl(`/api/chat/chat-rooms/${roomId}`), {
           credentials: 'include'
         })
           .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to load full room')))

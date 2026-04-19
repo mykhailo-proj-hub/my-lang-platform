@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import '../styles/LoginModal.css';
 import { useAuth } from '@/context/AuthContext';
+import { apiUrl } from '@/lib/api';
 
 
 export default function LoginModal({ onClose }) {
@@ -22,7 +23,7 @@ export default function LoginModal({ onClose }) {
     e.preventDefault();
     toast.loading(t('loading'), { id: 'login' });
 
-    const res = await fetch('http://localhost:5000/api/auth/login', {
+    const res = await fetch(apiUrl('/api/auth/login'), {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },

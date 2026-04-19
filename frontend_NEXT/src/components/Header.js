@@ -11,6 +11,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import AvatarCircle from './AvatarCircle';
 import LoginModal from './LoginModal';
 import Spinner from './Spinner'; 
+import { apiUrl } from '@/lib/api';
 import '../styles/Header.css';
 
 export default function Header() {
@@ -50,7 +51,7 @@ export default function Header() {
     if (isProtected) {
       try {
         // Перевірка авторизації через /api/auth/me
-        const res = await fetch('http://localhost:5000/api/auth/me', {
+        const res = await fetch(apiUrl('/api/auth/me'), {
           method: 'GET',
           credentials: 'include',
         });
@@ -74,7 +75,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:5000/api/auth/logout', {
+      await fetch(apiUrl('/api/auth/logout'), {
         method: 'POST',
         credentials: 'include',
       });

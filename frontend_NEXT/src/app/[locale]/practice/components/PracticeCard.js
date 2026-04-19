@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { apiUrl } from '@/lib/api';
 import './styles/PracticeCard.css';
 
 export default function PracticeCard({
@@ -27,7 +28,7 @@ export default function PracticeCard({
       setAnswered(true);
   
       try {
-        await fetch('http://localhost:5000/api/practice/save-answer', {
+        await fetch(apiUrl('/api/practice/save-answer'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

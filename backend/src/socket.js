@@ -1,10 +1,11 @@
 const { Server } = require('socket.io');
+const { parseAllowedOrigins } = require('./config');
 const db = require('./prismaClient'); // шлях залежить від структури
 
 function initializeSocket(server) {
   const io = new Server(server, {
     cors: {
-      origin: 'http://localhost:3000',
+      origin: parseAllowedOrigins(),
       credentials: true
     }
   });
