@@ -128,7 +128,11 @@ Overlay для локальної розробки. Він:
 - залишає стандартні production Dockerfile;
 - публікує назовні лише `frontend` і `backend`, без експонування PostgreSQL;
 - не монтує локальний код;
-- задає `NODE_ENV=production`.
+- задає `NODE_ENV=production`;
+- забороняє отримання нових привілеїв через `no-new-privileges`;
+- видаляє всі Linux capabilities через `cap_drop: ALL`;
+- обмежує пам'ять, CPU та кількість процесів;
+- використовує файлову систему лише для читання та окремі `tmpfs` для дозволених тимчасових записів.
 
 ### `backend/Dockerfile`
 
@@ -586,6 +590,7 @@ docker compose down -v
 - Docker Secrets у Compose-режимі все одно базуються на локальних файлах хоста;
 - немає окремого reverse proxy на кшталт Nginx або Traefik;
 - немає production-налаштувань SSL;
+- hardening Docker Host і Docker Daemon не може бути реалізований у межах репозиторію;
 - початкова збірка фронтенда на Alpine може бути відчутно довшою, ніж повторні збірки з кешем;
 - у фронтенді залишаються ESLint warning'и, хоча вони не блокують збірку.
 

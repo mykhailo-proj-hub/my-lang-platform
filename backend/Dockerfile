@@ -26,7 +26,8 @@ COPY --chown=node:node index.js ./
 COPY --chown=node:node docker-entrypoint.sh ./
 COPY --chown=node:node src ./src
 
-RUN chmod +x docker-entrypoint.sh
+RUN sed -i 's/\r$//' docker-entrypoint.sh \
+    && chmod +x docker-entrypoint.sh
 
 USER node
 

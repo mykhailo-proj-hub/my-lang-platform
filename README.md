@@ -144,6 +144,43 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
 - `backend/.env.example` can still be used for non-Docker local development
 - if ports `3000`, `5000` or `5432` are already busy, change `FRONTEND_PORT`, `BACKEND_PORT`, `DB_PORT` and matching URL variables in `.env`
 
+## Docker Security Notes
+
+The repository implements selected applicable practices from the CIS Docker Benchmark, NIST SP 800-190, and the OWASP Docker Security Cheat Sheet. This is not a claim of full compliance with any of these documents.
+
+- development and production-style Compose configurations are separated;
+- PostgreSQL is published to the host in development but remains internal in production-style mode;
+- real secrets are excluded from Git and mounted through Docker Secrets under `/run/secrets`;
+- production backend and frontend containers run as the non-root `node` user;
+- production images use multi-stage builds and minimized runtime artifacts;
+- service startup uses healthchecks and `depends_on` with `service_healthy`;
+- production backend and frontend use `no-new-privileges`, drop all Linux capabilities, have resource and process limits, and use a read-only root filesystem with explicit `tmpfs` mounts;
+- the Docker socket is not mounted and privileged containers are not used.
+
+Production verification commands:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml config
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+docker exec my-lang-platform-backend-1 whoami
+docker exec my-lang-platform-frontend-1 whoami
+docker image ls
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs backend --tail=50
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs frontend --tail=50
+```
+
+Image vulnerability scanning is recommended before deployment:
+
+```bash
+docker scout cves my-lang-platform-backend:latest
+docker scout cves my-lang-platform-frontend:latest
+```
+
+The base images use explicit version tags rather than `latest`. A production release process can strengthen reproducibility further by pinning reviewed base images by digest, for example `FROM node:20-alpine@sha256:...`.
+
+Host and daemon hardening, rootless Docker, user namespace remapping, registry security, image signing, SBOM generation, centralized logging, monitoring, backups, reverse proxy configuration, and HTTPS remain outside the repository scope. See [SECURITY.md](SECURITY.md) for details.
+
 ## Key Functionality Details
 
 ### Authentication
